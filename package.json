@@ -1,13 +1,20 @@
 {
-  "name": "live-nse-stock",
+  "name": "nse-live-quotes",
   "version": "0.0.1",
+  "description": "Fetch live quotes from NSE website",
+  "main": "live_quote.js",
   "dependencies": {
-    "express": "2.2.0"
-    ,"jade": ">= 0.0.1"
-  }
-  , "engines": {
-      "node": "0.6.13",
-      "npm": "1.1.41"
-  }
+    "express": "^4.14.0",
+    "request": "^2.73.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.heroku.com/nse-live.git"
+  },
+  "author": "Nitish Raj",
+  "license": "ISC"
 }
-

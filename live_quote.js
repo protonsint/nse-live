@@ -1,66 +1,44 @@
 var express = require('express');
+var Request = require('request');
+var app = express();
 
-var app = express.createServer(express.logger());
+app.get('/favicon.ico', function(req, res) {
+    res.status(200);
+});
 
-// Only possible part that needs to be executed
-app.get('/', function(request, response) {
-	if(request.query.symbol && request.query.symbol.length > 0) {
-		console.log("Symbol Requested - " + request.query.symbol);
-		
-		var http = require('http');
-
-		var symbol = request.query.symbol;
+app.get('/:symbol/', function(request, response) {
+	if(request.params.symbol && request.params.symbol.length > 0) {
+		var symbol = request.params.symbol;
+		console.log("Symbol Requested is " + symbol);
+		var stockUrl =`http://www.nseindia.com/live_market/dynaContent/live_watch/get_quote/ajaxGetQuoteJSON.jsp?symbol=${symbol}`;
+		console.log(stockUrl);
 		var options = {
-		  host: 'www.nseindia.com',
-		  method: 'GET',
-		  path: '/live_market/dynaContent/live_watch/get_quote/ajaxGetQuoteJSON.jsp?symbol=' + symbol,
-		  headers: {
-		  	"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)",
-		  	"Referer": "http://www.nseindia.com/",
-		  	"Accept": '*/*'
-		  }
-		};
+  url: stockUrl,
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36',
+    "Referer": "http://www.nseindia.com/",
+    "Accept": '*/*'
+  }
+};
+		Request(options, function (error, res, body) {
+			if (!error && response.statusCode == 200) {
+				var stockData = JSON.parse(body);
+				response.setHeader('Content-Type', 'application/json');
+				delete stockData.otherSeries;
+				delete stockData.optLink;
+				delete stockData.futLink;
+    			response.json(stockData);
+			}
+		})
 
-		var resp = "";	// Hold the servers response
 
-		var req = http.request(options, function(res) {
-			res.on('error', function(e) {
-				console.log("Got error: " + e.message);
-			});
-			res.on('data', function(data) {
-				resp += data;
-			});
-			res.on('end', function() {
-				resp = resp.trim();
-				data = JSON.parse(resp);
-
-				if(data.data.length < 1) {
-					// Invalid Symbol
-					response.send('<h1>Invalid Symbol</h1><p>Invalid Symbol given. Refer valid list of Symbols at <a href="http://blog.ashwanthkumar.in/2012/01/nse-valid-symbols.html">here</a></p>');
-					return;
-				}
-
-				// Cleaning up the feeds
-				delete data.otherSeries;
-				delete data.optLink;
-				delete data.futLink;
-				
-				// Now send the data
-				response.send(data);
-				
-				// @TODO Can still filter to provide more precise data 
-			});
-		});
-		req.end();
 	} else {
-		// Invalid request
-		response.send(invalidRequest(), 400);
+		response.status(400).send(invalidRequest());
 	}
 });
 
-// Map all other request
-app.get('/**', function(req, res) {
-	res.send(invalidRequest(), 400);
+app.get('/*', function(req, res) {
+	res.status(400).send(invalidRequest());
 });
 
 var port = process.env.PORT || 3000;
@@ -69,6 +47,6 @@ app.listen(port, function() {
 });
 
 function invalidRequest() {
-	return "<h1>INVALID REQUEST</h1><p>Request must be of the form:\r\n <strong>http://stocks.niti.tk/?symbol=SYMBOL</strong></p>\r\n";
+	return "Invalid Symbol";
 }
 
